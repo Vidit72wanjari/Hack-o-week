@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Smart HVAC Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0f2027;
+color:white;
+text-align:center;
+}
+
+.container{
+width:80%;
+margin:auto;
+}
+
+.card{
+background:#1c2b36;
+padding:20px;
+margin:15px;
+border-radius:10px;
+}
+
+.zone{
+padding:10px;
+margin:10px;
+border-radius:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Smart HVAC Energy Dashboard</h1>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Zone Heatmap</h2>
+
+<div id="zones"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Cooling Trend</h2>
+
+<canvas id="chart"></canvas>
+
+</div>
+
+</div>
+
+
+<script>
+
+let chartData=[]
+
+const ctx=document.getElementById("chart")
+
+const chart=new Chart(ctx,{
+type:"line",
+data:{
+labels:[],
+datasets:[{
+label:"Cooling Load",
+data:chartData
+}]
+}
+})
+
+
+function color(load){
+
+if(load>180) return "#ff4c4c"
+if(load>140) return "#ff9a3c"
+return "#4cc9f0"
+
+}
+
+
+async function update(){
+
+const res=await fetch("/zone_data")
+const data=await res.json()
+
+const zoneDiv=document.getElementById("zones")
+zoneDiv.innerHTML=""
+
+let total=0
+
+data.forEach(z=>{
+
+total+=z.cooling
+
+const div=document.createElement("div")
+div.className="zone"
+div.style.background=color(z.cooling)
+
+div.innerHTML=
+z.zone+
+"<br>Cooling:"+z.cooling+
+"<br>Occ:"+z.occupancy
+
+zoneDiv.appendChild(div)
+
+})
+
+let avg=total/data.length
+
+chart.data.labels.push("")
+chart.data.datasets[0].data.push(avg)
+
+chart.update()
+
+}
+
+setInterval(update,3000)
+
+</script>
+
+</body>
+
+</html>
